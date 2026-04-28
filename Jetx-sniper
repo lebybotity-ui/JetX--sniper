@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JetX Sniper Stats</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .signal { font-size: 24px; font-weight: bold; margin: 20px 0; padding: 10px; border-radius: 8px; }
+        .waiting { background: #333; color: #aaa; }
+        .go { background: #2ecc71; color: white; animation: blink 1s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+        input { padding: 10px; width: 60%; border-radius: 5px; border: none; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .history { margin-top: 20px; font-size: 14px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>JetX Analyzer x3</h2>
+        <div id="signalBox" class="signal waiting">EN ATTENTE DE DONNÉES</div>
+        
+        <p>Entrez le dernier crash :</p>
+        <input type="number" id="lastCrash" step="0.01" placeholder="Ex: 1.55">
+        <button onclick="addResult()">AJOUTER</button>
+
+        <div style="margin-top: 20px; text-align: left;">
+            <div>Écart actuel : <span id="gap">0</span> tours</div>
+            <div>Confiance : <span id="conf">0</span>%</div>
+        </div>
+
+        <div class="history">
+            Derniers résultats : <span id="histList">-</span>
+        </div>
+    </div>
+
+    <script>
+        let history = [];
+        const target = 3.0;
+
+        function addResult() {
+            let val = parseFloat(document.getElementById('lastCrash').value);
+            if (isNaN(val)) return;
+
+            history.push(val);
+            if (history.length > 50) history.shift();
+            
+            document.getElementById('lastCrash').value = '';
+            updateStats();
+        }
+
+        function updateStats() {
+            let gap = 0;
+            for (let i = history.length - 1; i >= 0; i--) {
+                if (history[i] >= target) break;
+                gap++;
+            }
+
+            // Calcul de confiance : au bout de 8 tours sans x3, le signal devient vert
+            let confidence = Math.min(100, (gap / 12) * 100);
+            
+            document.getElementById('gap').innerText = gap;
+            document.getElementById('conf').innerText = confidence.toFixed(1);
+            document.getElementById('histList').innerText = history.slice(-5).reverse().join(' | ');
+
+            let signalBox = document.getElementById('signalBox');
+            if (gap >= 8) {
+                signalBox.innerText = "SIGNAL SNIPER : PRÊT";
+                signalBox.className = "signal go";
+            } else {
+                signalBox.innerText = "ANALYSE EN COURS...";
+                signalBox.className = "signal waiting";
+            }
+        }
+    </script>
+</body>
+</html>
